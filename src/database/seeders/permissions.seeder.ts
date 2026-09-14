@@ -51,9 +51,16 @@ export class PermissionsSeeder {
     );
 
     // 2. Asignar permisos a roles
+    const superadmin = await this.roleRepo.findOneBy({ name: 'superadmin' });
     const admin = await this.roleRepo.findOneBy({ name: 'admin' });
     const manager = await this.roleRepo.findOneBy({ name: 'manager' });
     const sales = await this.roleRepo.findOneBy({ name: 'sales' });
+
+    // superadmin has unrestricted access: it receives every permission.
+    if (superadmin) {
+      superadmin.permissions = savedPerms;
+      await this.roleRepo.save(superadmin);
+    }
 
     if (admin) {
       admin.permissions = savedPerms;

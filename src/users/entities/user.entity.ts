@@ -36,8 +36,8 @@ export class User {
   name: string;
 
   /** Hash de bcrypt de la contraseña. Nunca debe exponerse en respuestas. */
-  @Column()
-  @Exclude()
+  @Column({ select: false })
+  @Exclude({ toPlainOnly: true })
   password: string;
 
   /** `true` = activo, `false` = inactivo. El admin inicial se crea activo. */
@@ -46,7 +46,6 @@ export class User {
 
   /** `null` = email aún no verificado; timestamp = fecha de verificación. */
   @Column({ type: 'timestamp', nullable: true })
-  @Exclude()
   email_verified_at: Date | null;
 
   @ManyToMany(() => Role, (role) => role.users)
@@ -64,8 +63,10 @@ export class User {
   created_at: Date;
 
   @UpdateDateColumn()
+  @Exclude({ toPlainOnly: true })
   update_at: Date;
 
   @DeleteDateColumn()
+  @Exclude()
   deleted_at: Date | null;
 }

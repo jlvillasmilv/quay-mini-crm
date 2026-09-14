@@ -14,9 +14,15 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Paginate } from 'nestjs-paginate';
 import type { PaginateQuery } from 'nestjs-paginate';
+import { RolesGuard } from '@/auth/guards/roles.guard';
+import { Roles } from '@/auth/decorators/roles.decorator';
+import { RoleName } from '@/auth/constants/roles';
 
 @Controller('users')
-@UseGuards(AuthGuard('jwt'))
+// JWT guard runs first (populates req.user), then RolesGuard enforces access.
+// Only `admin` can manage users; `superadmin` bypasses this check in RolesGuard.
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles(RoleName.ADMIN)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

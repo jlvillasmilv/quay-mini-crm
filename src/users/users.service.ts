@@ -75,17 +75,19 @@ export class UsersService {
   async findOne(id: number): Promise<User> {
     return await this.usersRepository.findOneOrFail({
       where: { id },
+      relations: { roles: true },
     });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
-    const { email } = updateUserDto;
-    // unique email validation
-    if (email) {
+    const { roleIds, password, ...userData } = updateUserDto;
+
+    // Validate email uniqueness only when it is being changed.
+    if (userData.email && userData.email !== user.email) {
       const existingUser = await this.usersRepository.findOne({
         where: {
-          email: email,
+          email: userData.email,
           id: Not(id),
         },
       });
@@ -94,8 +96,24 @@ export class UsersService {
         throw new ConflictException('Email already in use by another user');
       }
     }
-    Object.assign(user, updateUserDto);
-    return await this.usersRepository.save(user);
+
+    Object.assign(user, userData);
+
+    // Hash password only if provided.
+    if (password) {
+      user.password = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    }
+
+    // Replace the whole role set when `roleIds` is sent, so previous roles
+    // are not kept. An empty array removes all roles.
+    if (roleIds !== undefined) {
+      user.roles = roleIds.length ? await this.findRolesByIds(roleIds) : [];
+    }
+
+    await this.usersRepository.save(user);
+
+    // Reload to return the persisted relations (roles) in the response.
+    return this.findOne(id);
   }
 
   async remove(id: number): Promise<void> {
@@ -106,6 +124,21 @@ export class UsersService {
     return await this.usersRepository.findOne({
       where: { email: email.toLowerCase() },
     });
+  }
+
+  /**
+   * Finds a user by email including the password hash.
+   *
+   * The `password` column is declared with `select: false`, so it must be
+   * explicitly selected. Use it only for authentication flows; never return
+   * the resulting entity directly to a client.
+   */
+  async findOneByEmailWithPassword(email: string): Promise<User | null> {
+    return await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email: email.toLowerCase() })
+      .getOne();
   }
 
   async checkEmailAvailable(email: string) {

@@ -1,7 +1,8 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '@/users/users.service';
 import { JwtPayload } from '../auth.service';
 
 /** Authenticated user injected by the JWT guard into `req.user` of protected handlers. */
@@ -9,11 +10,16 @@ export interface JwtUser {
   id: number;
   email: string;
   name: string;
+  /** Role names held by the user, used by RolesGuard. */
+  roles: string[];
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    private readonly usersService: UsersService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -23,9 +29,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   /**
    * Runs after the token signature and expiration are validated.
-   * The returned object is injected into `req.user` of protected handlers.
+   * Reloads the user so the latest roles are available in `req.user`
+   * (roles can change after the token was issued).
    */
-  validate(payload: JwtPayload): JwtUser {
-    return { id: payload.sub, email: payload.email, name: payload.name };
+  async validate(payload: JwtPayload): Promise<JwtUser> {
+    const user = await this.usersService.findOne(payload.sub).catch(() => null);
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      roles: (user.roles ?? []).map((role) => role.name),
+    };
   }
 }

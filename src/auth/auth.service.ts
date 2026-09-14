@@ -95,7 +95,7 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<PublicUser | null> {
-    const user = await this.usersService.findOneByEmail(email);
+    const user = await this.usersService.findOneByEmailWithPassword(email);
     if (!user) {
       return null;
     }

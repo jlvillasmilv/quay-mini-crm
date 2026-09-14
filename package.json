@@ -82,6 +82,10 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1",
+      "^@nestjs/typeorm$": "<rootDir>/../test/typeorm.mock.ts"
+    },
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
