@@ -21,15 +21,15 @@ export interface JwtPayload {
   name: string;
 }
 
-/** Payload de los tokens de recuperación de contraseña. */
+/** Payload password recovery token */
 export interface ResetTokenPayload extends JwtPayload {
-  /** Claim que distingue un token de reset de un access token. */
+  /** Claim that distinguishes a reset token from an access token. */
   type: 'reset';
 }
 
-/** Payload de los tokens de verificación de email. */
+/** Payload tokens email verification. */
 export interface VerifyEmailPayload extends JwtPayload {
-  /** Claim que distingue un token de verificación de un access token. */
+  /** Claim that distinguishes a verify-email token from an access token. */
   type: 'verify-email';
 }
 
@@ -85,12 +85,11 @@ export class AuthService {
   ) {}
 
   /**
-   * Valida credenciales de usuario para la estrategia local (login).
+   * Validates user credentials for the local strategy (login).
    *
-   * Devuelve los datos públicos del usuario (sin `password`) si las
-   * credenciales son correctas, o `null` en caso contrario. Nunca lanza
-   * excepciones: la estrategia local es la que traduce `null` en 401,
-   * evitando así revelar si un email existe o no.
+   * Returns the public user data (without `password`) if the credentials are
+   * valid, or `null` otherwise. Never throws exceptions: the local strategy
+   * translates `null` into 401, so the client doesn't know if the email exists or not.
    */
   async validateUser(
     email: string,
@@ -113,8 +112,8 @@ export class AuthService {
   }
 
   /**
-   * Autentica a un usuario ya validado y devuelve el token JWT.
-   * El login queda bloqueado hasta que el email esté verificado.
+   * Authenticates a validated user and returns the JWT token.
+   * The login is blocked until the email is verified.
    */
   login(user: PublicUser): AuthResponse {
     return this.buildAuthResponse(user);
@@ -129,8 +128,8 @@ export class AuthService {
    */
   async register(userDTO: CreateUserDto): Promise<{ message: string }> {
     const newUser = await this.usersService.create(userDTO);
-    await this.sendVerificationEmail(newUser);
-    this.logger.log(`Correo de verificación enviado a: ${newUser.email}`);
+    this.sendVerificationEmail(newUser);
+    this.logger.log(`Correo de verificación encolado para: ${newUser.email}`);
 
     return {
       message:
@@ -172,8 +171,8 @@ export class AuthService {
       this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
     const resetUrl = `${frontendUrl}/reset?token=${token}`;
 
-    await this.mailService.sendResetPassword(user.email, user.name, resetUrl);
-    this.logger.log(`Enlace de recuperación enviado a: ${user.email}`);
+    this.mailService.sendResetPassword(user.email, user.name, resetUrl);
+    this.logger.log(`Enlace de recuperación encolado para: ${user.email}`);
 
     return { message: 'Enlace de recuperación enviado' };
   }
@@ -276,13 +275,13 @@ export class AuthService {
       };
     }
 
-    await this.sendVerificationEmail(user);
-    this.logger.log(`Nuevo enlace de verificación enviado a: ${user.email}`);
+    this.sendVerificationEmail(user);
+    this.logger.log(`Nuevo enlace de verificación encolado para: ${user.email}`);
 
     return { message: 'Se ha enviado un nuevo enlace de verificación' };
   }
 
-  /** Construye la respuesta de autenticación firmando el JWT. */
+  /** builds the authentication response signing the JWT. */
   private buildAuthResponse(
     user: Pick<User, 'id' | 'email' | 'email_verified_at' | 'name'>,
   ): AuthResponse {
@@ -313,8 +312,8 @@ export class AuthService {
     };
   }
 
-  /** Signs a verification token and sends the confirmation email. */
-  private async sendVerificationEmail(user: PublicUser): Promise<void> {
+  /** Signs a verification token and enqueues the confirmation email. */
+  private sendVerificationEmail(user: PublicUser): void {
     const token = this.jwtService.sign(
       { sub: user.id, email: user.email, type: EMAIL_VERIFICATION_TYPE },
       {
@@ -327,7 +326,7 @@ export class AuthService {
       this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
     const verifyUrl = `${frontendUrl}/verify-email?token=${token}`;
 
-    await this.mailService.sendUserConfirmation(
+    this.mailService.sendUserConfirmation(
       user.email,
       user.name,
       verifyUrl,

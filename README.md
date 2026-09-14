@@ -1,98 +1,143 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Quay Mini CRM
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Quay Mini CRM es un sistema backend ligero para la gestión de clientes y relaciones comerciales desarrollado con **NestJS** (v11) y **MariaDB** (TypeORM).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🛠️ Tech Stack & Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Framework**: [NestJS](https://nestjs.com/) (TypeScript)
+- **Database**: MariaDB via [TypeORM](https://typeorm.io/)
+- **Authentication**: JWT Stateless Strategy + Passport + Local Strategy
+- **Validation**: Global `ValidationPipe` with `class-validator` & `class-transformer`
+- **Mail System**: In-memory asynchronous queue (`@nestjs/event-emitter`) + `@nestjs-modules/mailer` with Handlebars templates
+- **Pagination**: `nestjs-paginate`
 
-## Project setup
+---
 
-```bash
-$ npm install
+## 📁 Modules Overview
+
+| Module | Description |
+|---|---|
+| **Auth** | User authentication, email verification, password reset, and JWT profile management. |
+| **Users** | User management with role assignment (Many-to-Many), soft delete, and pagination. |
+| **Accounts** | Customer accounts management for business/CRM entities. |
+| **Contacts** | Contact persons linked to customer accounts. |
+| **Mail** | Async queued email sender using Handlebars templates (`verification`, `reset-password`). |
+| **Database** | TypeORM DataSource configuration, seeders (`Roles`, `Permissions`, `Admin`), and migrations. |
+
+---
+
+## ⚙️ Environment Configuration
+
+Create a `.env` file in the project root:
+
+```env
+# Application
+PORT=3000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+
+# Database (MariaDB)
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=quay_mini_crm
+
+# JWT Secrets
+JWT_SECRET=super_secret_jwt_key
+JWT_EXPIRATION=1h
+PASSWORD_RESET_SECRET=super_secret_reset_key
+EMAIL_VERIFICATION_SECRET=super_secret_verify_key
+
+# Mailer SMTP Configuration
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USER=your_mail_user
+MAIL_PASSWORD=your_mail_password
 ```
 
-## Compile and run the project
+---
+
+## 🚀 Getting Started
+
+### 1. Installation
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 2. Database Migrations
+
+Run database migrations to generate tables:
 
 ```bash
-# unit tests
-$ npm run test
+# Run pending migrations
+npm run migration:run
 
-# e2e tests
-$ npm run test:e2e
+# Generate a new migration (automatically saved in src/database/migrations/)
+npm run migration:generate -- <MigrationName>
 
-# test coverage
-$ npm run test:cov
+# Revert last migration
+npm run migration:revert
 ```
 
-## Deployment
+### 3. Database Seeding
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Initial seeds create roles (`admin`, `manager`, `sales`), permissions, and the default admin user.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+To enable seeds on startup, uncomment `SeedModule` in `src/app.module.ts`:
+
+```typescript
+// src/app.module.ts
+imports: [
+  // ...
+  SeedModule,
+]
+```
+
+### 4. Running the Application
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Development mode
+npm run start:dev
+
+# Production mode
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 📧 Async Email Queue
 
-Check out a few resources that may come in handy when working with NestJS:
+Emails sent during user registration, email verification resend, and password recovery are processed using an **in-memory async queue** (`@nestjs/event-emitter`).
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- **Non-blocking**: HTTP requests return immediately without waiting for SMTP transport.
+- **Resilience**: Failed email deliveries are retried up to 3 times automatically.
+- **Rate-limiting**: Built-in delay between emails to avoid hitting SMTP provider limits.
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🗺️ Roadmap & Future Modules
 
-## Stay in touch
+- **Leads**: Lead acquisition, statuses (new, contacted, qualified, lost).
+- **Deals / Pipeline**: Sales pipeline management and opportunity tracking.
+- **Orders & Invoicing**: Order status tracking and PDF invoice generation.
+- **Role-Based Access Control (RBAC)**: Fine-grained permissions guard using `users_roles` and `roles_permissions`.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
-## License
+## 🧪 Testing
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+# Unit tests
+npm run test
+
+# End-to-end tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```

@@ -1,4 +1,3 @@
-// accounts.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -14,32 +13,22 @@ import {
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { PaginateQuery, paginate, Paginated } from 'nestjs-paginate';
-import { User } from '@/users/entities/user.entity';
 
 @Injectable()
 export class AccountsService {
   constructor(
     @InjectRepository(Account)
-    private repo: Repository<Account>,
+    private readonly repo: Repository<Account>,
   ) {}
 
   async create(dto: CreateAccountDto): Promise<Account> {
-    // Validar según recordType
     if (dto.recordType === AccountRecordType.BUSINESS && !dto.name) {
       throw new BadRequestException(
         'name es obligatorio para recordType BUSINESS',
       );
     }
-    if (
-      dto.recordType === AccountRecordType.PERSON &&
-      (!dto.firstName || !dto.lastName)
-    ) {
-      throw new BadRequestException(
-        'firstName y lastName son obligatorios para recordType PERSON',
-      );
-    }
 
-    const account = this.repo.create(dto);
+    const account = this.repo.create(dto as unknown as Partial<Account>);
     return this.repo.save(account);
   }
 
@@ -52,42 +41,30 @@ export class AccountsService {
     });
   }
 
-  async findOne(id: string, currentUser: User): Promise<Account> {
+  async findOne(id: number): Promise<Account> {
     const account = await this.repo.findOne({
       where: { id },
-      relations: { owner: true, contacts: true, opportunities: true },
+      relations: { owner: true, contacts: true },
     });
     if (!account) throw new NotFoundException('Account no encontrado');
-
-    // RBAC: sales_rep solo ve sus accounts
-    if (
-      currentUser.role === UserRole.SALES_REP &&
-      account.ownerId !== currentUser.id
-    ) {
-      throw new NotFoundException('Account no encontrado');
-    }
 
     return account;
   }
 
-  async update(id: string, dto: UpdateAccountDto): Promise<Account> {
-    const account = await this.repo.findOne({ where: { id } });
-    if (!account) throw new NotFoundException('Account no encontrado');
+  async update(id: number, dto: UpdateAccountDto): Promise<Account> {
+    const account = await this.findOne(id);
 
     Object.assign(account, dto);
     return this.repo.save(account);
   }
 
-  async remove(id: string): Promise<void> {
-    const account = await this.repo.findOne({ where: { id } });
-    if (!account) throw new NotFoundException('Account no encontrado');
-    await this.repo.softDelete(account);
+  async remove(id: number): Promise<void> {
+    const account = await this.findOne(id);
+    await this.repo.softDelete(account.id);
   }
 
-  // ─── Método clave: convertir prospect → customer ───
-  async markAsCustomer(id: string): Promise<Account> {
-    const account = await this.repo.findOne({ where: { id } });
-    if (!account) throw new NotFoundException('Account no encontrado');
+  async markAsCustomer(id: number): Promise<Account> {
+    const account = await this.findOne(id);
 
     account.type = AccountType.CUSTOMER;
     return this.repo.save(account);
