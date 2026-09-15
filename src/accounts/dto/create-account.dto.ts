@@ -1,4 +1,10 @@
-import { IsString, IsEnum, IsOptional, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsNumber,
+  MaxLength,
+} from 'class-validator';
 import {
   AccountRecordType,
   AccountType,
@@ -7,7 +13,7 @@ import {
 
 export class CreateAccountDto {
   @IsEnum(AccountRecordType)
-  recordType: AccountRecordType;
+  record_type: AccountRecordType;
 
   @IsEnum(AccountType)
   @IsOptional()
@@ -20,25 +26,16 @@ export class CreateAccountDto {
 
   @IsString()
   @IsOptional()
-  industry?: string;
-
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  employeeCount?: number;
-
-  @IsString()
-  @IsOptional()
   website?: string;
 
   // B2C
   @IsString()
   @IsOptional()
-  firstName?: string;
+  first_name?: string;
 
   @IsString()
   @IsOptional()
-  lastName?: string;
+  last_name?: string;
 
   @IsString()
   @IsOptional()
@@ -52,15 +49,19 @@ export class CreateAccountDto {
   @IsString()
   @IsOptional()
   address?: string;
+
   @IsString()
   @IsOptional()
   city?: string;
+
   @IsString()
   @IsOptional()
   country?: string;
+
   @IsString()
   @IsOptional()
-  postalCode?: string;
+  @MaxLength(20)
+  postal_code?: string;
 
   @IsEnum(LeadSource)
   @IsOptional()
@@ -68,8 +69,9 @@ export class CreateAccountDto {
 
   @IsString()
   @IsOptional()
-  parentAccountId?: string;
+  parent_account_id?: string;
 
-  @IsString()
-  ownerId: string;
+  @IsNumber()
+  @IsOptional()
+  owner_id?: number;
 }

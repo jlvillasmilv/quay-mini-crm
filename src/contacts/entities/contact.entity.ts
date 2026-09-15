@@ -16,13 +16,13 @@ export class Contact {
   id: number;
 
   @Column()
-  firstName: string;
+  first_name: string;
 
   @Column()
-  lastName: string;
+  last_name: string;
 
   @Column()
-  jobTitle: string;
+  job_title: string;
 
   @Column()
   email: string;

@@ -40,7 +40,7 @@ export class Account {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ length: 150 })
   name: string;
 
   @Column({ type: 'enum', enum: AccountType, default: AccountType.PROSPECT })
@@ -49,30 +49,27 @@ export class Account {
   @Column({ type: 'enum', enum: AccountRecordType })
   record_type: AccountRecordType;
 
-  @Column()
-  industry: string;
-
-  @Column()
-  employeeCount: number;
-
-  @Column()
+  @Column({ nullable: true })
   website: string;
 
-  @Column()
+  @Column({ nullable: true })
   address: string;
-  @Column()
+
+  @Column({ nullable: true })
   city: string;
-  @Column()
+
+  @Column({ nullable: true })
   country: string;
-  @Column()
-  postalCode: string;
+
+  @Column({ nullable: true, length: 20 })
+  postal_code: string;
 
   @Column({ type: 'enum', enum: LeadSource, nullable: true })
   source: LeadSource;
 
   // ─── Jerarquía (matriz / filial) ───
   @Column({ nullable: true })
-  parentAccountId: number;
+  parent_account_id: number;
 
   @ManyToOne(() => User, (u) => u.ownedAccounts)
   @JoinColumn({ name: 'owner_id' })
